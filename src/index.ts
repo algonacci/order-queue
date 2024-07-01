@@ -1,9 +1,67 @@
 import { Elysia, t } from "elysia";
 import { client } from "./models/client";
+import { cors } from '@elysiajs/cors'
 
 
 const app = new Elysia()
+  .use(cors())
   .get("/", () => "Hello Elysia")
+  .get("/queues", () => {
+    const queuesWithUsers: any = client.query(`
+        SELECT queues.id as queue_id, queues.status as queue_status, queue_users.user_id, users.name as user_name
+        FROM queues
+        INNER JOIN queue_users ON queues.id = queue_users.queue_id
+        INNER JOIN users ON queue_users.user_id = users.id
+    `).all();
+
+    const groupedQueues: any = {};
+
+    queuesWithUsers.forEach(queue => {
+      const { queue_id, queue_status, user_id, user_name } = queue;
+
+      if (!groupedQueues[queue_id]) {
+        groupedQueues[queue_id] = {
+          status: queue_status,
+          members: []
+        };
+      }
+
+      groupedQueues[queue_id].members.push(user_name);
+    });
+
+    const formattedQueues = Object.keys(groupedQueues).map(queue_id => {
+      const { status, members } = groupedQueues[queue_id];
+      // Urutkan members berdasarkan nama user
+      members.sort();
+      return {
+        group: {
+          id: queue_id,
+          members: members,
+          status: status
+        }
+      };
+    });
+
+    return {
+      status: {
+        code: 200,
+        message: "Success get all queues with users"
+      },
+      data: formattedQueues
+    };
+  })
+
+
+  .get("/products", () => {
+    const allProducts = client.query("SELECT * from products").all()
+    return {
+      status: {
+        code: 200,
+        message: "Success get all products"
+      },
+      data: allProducts
+    }
+  })
   .post("/join", async ({ body }) => {
     const { user_id, product_id } = body
     if (!user_id || !product_id) {

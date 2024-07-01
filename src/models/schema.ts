@@ -46,5 +46,5 @@ INSERT INTO users (name, role, created_at) VALUES
 
 INSERT INTO products (name, description, max_users, created_at) VALUES
     ('Netflix', 'Streaming service for movies and TV shows', 5, DATETIME('now')),
-    ('YouTube', 'Video sharing platform', 5, DATETIME('now'));
+    ('YouTube', 'Video sharing platform', 3, DATETIME('now'));
 `)

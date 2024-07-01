@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Products and Users in Queue with Bootstrap Cards</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>List of Products</h1>
+        <div id="product-list" class="row"></div>
+
+        <h1>List of Users in Queue</h1>
+        <div id="users-queue-list"></div>
+    </div>
+
+    <!-- Bootstrap JS and Popper.js (for Bootstrap) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // Fetch dari endpoint /products
+        const fetchProducts = fetch('http://localhost:3000/products')
+            .then(response => response.json())
+            .then(data => {
+                const productList = document.getElementById('product-list');
+
+                // Memproses data produk
+                data.data.forEach(product => {
+                    // Membuat card untuk setiap produk
+                    const card = document.createElement('div');
+                    card.className = 'card col-md-4';
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <h5 class="card-title">${product.name}</h5>
+                            <p class="card-text">${product.description}</p>
+                            <p class="card-text">Max Users: ${product.max_users}</p>
+                        </div>
+                    `;
+                    productList.appendChild(card);
+                });
+            })
+            .catch(error => console.error('Error fetching products:', error));
+
+        // Fetch dari endpoint /queues
+        const fetchUsersQueue = fetch('http://localhost:3000/queues')
+            .then(response => response.json())  // Ubah respons menjadi objek JSON
+            .then(data => {
+                const usersQueueList = document.getElementById('users-queue-list');
+
+                // Membuat card untuk setiap grup antrian
+                data.data.forEach(group => {
+                    const badgeClass = group.group.status === 'Full' ? 'badge badge-danger' : 'badge badge-warning';
+
+                    const card = document.createElement('div');
+                    card.className = 'card mb-3';
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <h5 class="card-title">Group ID: ${group.group.id}</h5>
+                            <h5 class="${badgeClass}">${group.group.status}</h5>
+                            <ul class="list-group list-group-flush">
+                                ${group.group.members.map(member => `
+                                    <li class="list-group-item">${member}</li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `;
+                    usersQueueList.appendChild(card);
+                });
+            })
+            .catch(error => console.error('Error fetching users in queue:', error));
+
+        // Gabungkan kedua fetch dalam Promise.all
+        Promise.all([fetchProducts, fetchUsersQueue])
+            .then(() => {
+                console.log('Fetch completed.');
+                // Lakukan sesuatu setelah kedua fetch selesai
+            })
+            .catch(error => console.error('Error in Promise.all:', error));
+    </script>
+</body>
+
+</html>
